@@ -1,0 +1,168 @@
+import 'package:flutter/material.dart';
+import 'package:goflix/api/api.dart';
+import 'package:goflix/models/movie_get.dart';
+import 'package:goflix/models/serial_get.dart';
+import 'package:goflix/widgets/carousel_new.dart';
+import 'package:goflix/widgets/list_movie.dart';
+import 'package:goflix/widgets/search_widget.dart';
+import 'package:goflix/widgets/slider_trending.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreen();
+}
+
+class _HomeScreen extends State<HomeScreen> {
+  late Future<List<GetSerial>> trendSeries;
+  late Future<List<GetMovie>> showMovies;
+  late Future<List<GetMovie>> topMovies;
+  late Future<List<GetMovie>> comingMovies;
+
+  List<GetMovie> searchResults = [];
+
+  @override
+  void initState() {
+    super.initState();
+    trendSeries = Api().trendingSerial();
+    showMovies = Api().trendingMovies();
+    topMovies = Api().topRatedMovies();
+    comingMovies = Api().upcomingMovies();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: searchWidget(context),
+        body: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.only(left: 16.0),
+                child: Text(
+                  'Trending Now !',
+                  style: GoogleFonts.poppins(fontSize: 24),
+                ),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                child: FutureBuilder(
+                  future: showMovies,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text(snapshot.error.toString()),
+                      );
+                    } else if (snapshot.hasData) {
+                      return TrendingSlider(
+                        snapshot: snapshot,
+                      );
+                    } else {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.only(left: 16.0),
+                child: Text(
+                  'Tranding Series',
+                  style: GoogleFonts.poppins(fontSize: 24),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.only(left: 16.0),
+                child: SizedBox(
+                  child: FutureBuilder(
+                    future: trendSeries,
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: Text(snapshot.error.toString()),
+                        );
+                      } else if (snapshot.hasData) {
+                        return TrendSerial2(
+                          snapshot: snapshot,
+                        );
+                      } else {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.only(left: 16.0),
+                child: Text(
+                  'Upcoming',
+                  style: GoogleFonts.poppins(fontSize: 24),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.only(left: 16.0),
+                child: SizedBox(
+                  child: FutureBuilder(
+                    future: comingMovies,
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: Text(snapshot.error.toString()),
+                        );
+                      } else if (snapshot.hasData) {
+                        return ListMovie(
+                          snapshot: snapshot,
+                        );
+                      } else {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                    },
+                  ),
+                ),
+              ),
+              if (searchResults.isNotEmpty)
+                Column(
+                  children: [
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 16.0),
+                      child: Text(
+                        'Search Results',
+                        style: GoogleFonts.poppins(fontSize: 24),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Ganti tipe data snapshot dengan AsyncSnapshot<List<GetMovie>>
+                    FutureBuilder<List<GetMovie>>(
+                      future: Future.value(
+                          searchResults), // Gunakan Future.value untuk membuat Future<List<GetMovie>>
+                      builder: (context, snapshot) {
+                        if (snapshot.hasError) {
+                          return Center(
+                            child: Text(snapshot.error.toString()),
+                          );
+                        } else if (snapshot.hasData) {
+                          return ListMovie(
+                            snapshot: snapshot,
+                          );
+                        } else {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        }
+                      },
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ));
+  }
+}
